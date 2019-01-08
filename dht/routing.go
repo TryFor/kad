@@ -132,7 +132,48 @@ func (routing *Routing) LoadRouting(reader io.Reader) error {
 	if err != nil {
 		return err
 	}
+	nodes := ParseBytesStream(stream)
+	for _, v := range nodes {
+		routing.InsertNode(v)
+	}
 	return nil
+}
+
+
+func (routing *Routing) InsertNode(other *NodeInfo) {
+	if routing.isMe(other) {
+		return
+	}
+	bucket, idx := routing.findBucket(other.ID)
+	if bucket.updateIfExists(other) {
+		return
+	}
+	if bucket.Len() < K{
+		bucket.Add(other)
+		return
+	}
+	if idx == len(routing.table)-1 {
+
+	}
+
+}
+
+
+func (routing *Routing) isMe(other *NodeInfo) bool{
+	return routing.ownNode.Info.ID.CompareTo(other.ID) == 0
+}
+
+func (routing *Routing) findBucket(dst Identifier)(*Bucket, int) {
+	idx := routing.bucketIndex(dst)
+	length := len(routing.table)
+	if length > idx {
+		return routing.table[idx],idx
+	}
+	return routing.table[length-1],length-1
+}
+
+func (routing *Routing) bucketIndex(dst Identifier) int {
+	return BucketIndex(routing.ownNode.ID(), dst)
 }
 
 
